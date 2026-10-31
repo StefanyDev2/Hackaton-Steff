@@ -20,19 +20,35 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 export function crearRepositorioArchivo(ruta) {
-  // TODO etapa 2: leer() y escribir(lista) sobre `ruta`, y los cuatro métodos del puerto apoyados en ellos.
+  const leer = () => (existsSync(ruta) ? JSON.parse(readFileSync(ruta, 'utf8')) : []);
+  const escribir = (evaluaciones) => {
+    mkdirSync(dirname(ruta), { recursive: true });
+    writeFileSync(ruta, JSON.stringify(evaluaciones, null, 2));
+  };
+
   return {
     listar() {
-      throw new Error('TODO etapa 2: listar');
+      return leer();
     },
     obtener(id) {
-      throw new Error('TODO etapa 2: obtener');
+      return leer().find((e) => e.id === id);
     },
     guardar(evaluacion) {
-      throw new Error('TODO etapa 2: guardar');
+      const evaluaciones = leer();
+      const mayorId = Math.max(0, ...evaluaciones.map((e) => e.id));
+      const guardada = { ...evaluacion, id: evaluacion.id ?? mayorId + 1 };
+      const posicion = evaluaciones.findIndex((e) => e.id === guardada.id);
+      if (posicion === -1) evaluaciones.push(guardada);
+      else evaluaciones[posicion] = guardada;
+      escribir(evaluaciones);
+      return guardada;
     },
     eliminar(id) {
-      throw new Error('TODO etapa 2: eliminar');
+      const evaluaciones = leer();
+      const restantes = evaluaciones.filter((e) => e.id !== id);
+      if (restantes.length === evaluaciones.length) return false;
+      escribir(restantes);
+      return true;
     },
   };
 }
