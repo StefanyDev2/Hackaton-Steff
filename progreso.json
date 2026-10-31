@@ -1,0 +1,24 @@
+{
+  "esquema": 1,
+  "equipo": "Hackaton-Stefff",
+  "integrantes": [
+    "StefanyUseche"
+  ],
+  "actualizado": "2026-10-31T16:32:30.979Z",
+  "entorno": {
+    "node": "v20.19.0",
+    "sistema": "win32 x64"
+  },
+  "etapas": {
+    "0": {
+      "titulo": "Contenedor listo",
+      "puntos": 10,
+      "extra": false,
+      "ok": true,
+      "primeraVez": "2026-10-31T16:27:15.003Z",
+      "ultima": "2026-10-31T16:32:33.235Z",
+      "comprobaciones": "2/2",
+      "evidencia": "docker 29.5.3"
+    }
+  }
+}
