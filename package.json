@@ -1,0 +1,12 @@
+{
+  "name": "hackaton-hexagonal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hackatón hexagonal: arquitectura hexagonal con APIs, por etapas y con contenedores (plantilla)",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node src/main.mjs",
+    "verificar": "node verificar.mjs"
+  }
+}

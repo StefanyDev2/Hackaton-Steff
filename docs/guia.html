@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hackatón hexagonal — Guía</title>
+<meta name="description" content="Guía del Hackatón hexagonal (Arquitectura de Software): seis etapas para llevar una API de notas a una arquitectura hexagonal y empacarla en un contenedor con Docker o Podman.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231f5f8b'/%3E%3Cpolygon points='16,5 26,10.5 26,21.5 16,27 6,21.5 6,10.5' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='3.2' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #eae7de;
+    --sheet: #fbfaf5;
+    --ink: #21241f;
+    --ink-soft: #5c6158;
+    --line: #dbd7c9;
+    --accent: #c85a1d;
+    --accent-soft: #f1dcc9;
+    --cat-error: #6b6f63;
+    --cat-error-soft: #e4e4dc;
+    --cat-defecto: #a5761f;
+    --cat-defecto-soft: #f1e2c2;
+    --cat-falla: #a8362a;
+    --cat-falla-soft: #f2d9d4;
+    --ok: #4a7a3f;
+    --shadow: 0 1px 2px rgba(33,36,31,0.06), 0 12px 32px -16px rgba(33,36,31,0.28);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17181a;
+      --sheet: #232420;
+      --ink: #ede9df;
+      --ink-soft: #a8a99a;
+      --line: #3a3b34;
+      --accent: #e58444;
+      --accent-soft: #3a2a1c;
+      --cat-error: #a3a696;
+      --cat-error-soft: #34352d;
+      --cat-defecto: #d9a648;
+      --cat-defecto-soft: #3a2f18;
+      --cat-falla: #dd7a6c;
+      --cat-falla-soft: #3a211d;
+      --ok: #7fb56f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -16px rgba(0,0,0,0.6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #17181a;
+    --sheet: #232420;
+    --ink: #ede9df;
+    --ink-soft: #a8a99a;
+    --line: #3a3b34;
+    --accent: #e58444;
+    --accent-soft: #3a2a1c;
+    --cat-error: #a3a696;
+    --cat-error-soft: #34352d;
+    --cat-defecto: #d9a648;
+    --cat-defecto-soft: #3a2f18;
+    --cat-falla: #dd7a6c;
+    --cat-falla-soft: #3a211d;
+    --ok: #7fb56f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -16px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: clamp(20px, 5vw, 56px) clamp(16px, 4vw, 28px) 64px;
+  }
+
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: clamp(24px, 5vw, 56px);
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+
+  h1 {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-weight: 700;
+    font-size: clamp(34px, 6vw, 48px);
+    line-height: 1.02;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 24px;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .tag-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 9px 14px;
+    border-radius: 2px;
+    transition: border-color 120ms ease, transform 120ms ease;
+  }
+  .tag-link:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .tag-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tag-link .k { color: var(--ink-soft); }
+
+  hr.div {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 36px 0;
+  }
+
+  h2 {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin: 0 0 6px;
+  }
+
+  h3 {
+    font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+    font-weight: 600;
+    font-size: 19px;
+    margin: 0 0 4px;
+  }
+
+  .section-note {
+    color: var(--ink-soft);
+    font-size: 15.5px;
+    max-width: 64ch;
+    margin: 0 0 20px;
+  }
+
+  .pipeline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 13px;
+  }
+  .pipeline .step {
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 6px 12px;
+    background: var(--paper);
+  }
+  .pipeline .arrow { color: var(--ink-soft); }
+
+  .gherkin-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 14px;
+    padding: 6px 0;
+  }
+  .gherkin-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+  .criterio {
+    border-top: 1px solid var(--line);
+    padding: 12px 0;
+  }
+  .criterio:first-of-type { border-top: none; padding-top: 4px; }
+
+  .example-box {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ok);
+    border-radius: 3px;
+    padding: 18px 20px;
+    background: var(--paper);
+    margin-bottom: 8px;
+  }
+  .example-tag {
+    display: inline-block;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ok);
+    margin-bottom: 8px;
+  }
+
+  table.cp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 12px;
+  }
+  .cp-table th, .cp-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .cp-table th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .cp-table code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.92em;
+    background: var(--accent-soft);
+    padding: 0.1em 0.4em;
+    border-radius: 2px;
+  }
+
+  .story-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .story-card {
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    gap: 18px;
+    padding: 16px 4px;
+    border-top: 1px solid var(--line);
+  }
+  .story-card:last-child { border-bottom: 1px solid var(--line); }
+  .story-id {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+  .story-title {
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .story-text {
+    font-size: 16px;
+  }
+
+  .steps-list {
+    margin: 0;
+    padding-left: 22px;
+  }
+  .steps-list li {
+    margin-bottom: 8px;
+    font-size: 16px;
+  }
+  .steps-list li::marker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    justify-content: space-between;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 520px) {
+    .story-card { grid-template-columns: 1fr; gap: 4px; }
+    .gherkin-row { grid-template-columns: 1fr; gap: 2px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  .page { max-width: 860px; }
+  .k { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.78em; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; color: var(--ink-soft); }
+  .stats b { color: var(--ink); font-weight: 600; }
+  .steps4 { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: st; }
+  .steps4 li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; counter-increment: st; }
+  .steps4 li::before { content: counter(st); font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 22px; color: var(--accent); line-height: 1.3; }
+  .steps4 strong { display: block; font-size: 16px; }
+  .steps4 span { color: var(--ink-soft); font-size: 15px; }
+  pre.template { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--accent); padding: 14px 16px; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 1.55; overflow-x: auto; white-space: pre-wrap; margin: 8px 0 10px; }
+  button.copy { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 2px; padding: 7px 12px; cursor: pointer; }
+  button.copy:hover { border-color: var(--accent); }
+  button.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 6px; }
+  @media (max-width: 680px) { .pair { grid-template-columns: 1fr; } }
+  .stack { display: flex; flex-direction: column; gap: 12px; margin: 14px 0 6px; }
+  .ex { border: 1px solid var(--line); border-radius: 3px; padding: 12px 14px; background: var(--paper); font-size: 14.5px; }
+  .ex.bad { border-left: 3px solid var(--cat-falla); }
+  .ex.good { border-left: 3px solid var(--ok); }
+  .ex.plan { border-left: 3px solid var(--accent); }
+  .ex .tag { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .ex.bad .tag { color: var(--cat-falla); }
+  .ex.good .tag { color: var(--ok); }
+  .ex.plan .tag { color: var(--accent); }
+  .ex p { margin: 0 0 6px; }
+  .ex p:last-child { margin: 0; }
+  .ex .cp { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 1.5; margin: 0 0 8px; }
+  table.plain { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .table-wrap { overflow-x: auto; }
+  table.plain th, table.plain td { text-align: left; padding: 9px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.plain thead th { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); border-top: none; border-bottom: 1px solid var(--line); }
+  table.plain code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86em; background: var(--accent-soft); padding: 0.1em 0.4em; border-radius: 2px; }
+  .sev { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .tools { margin: 0; padding-left: 20px; }
+  .tools li { margin-bottom: 6px; font-size: 15.5px; }
+  .section-note code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86em; background: var(--accent-soft); padding: 0.1em 0.4em; border-radius: 2px; }
+  .epic-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 30px 0 2px; }
+  .epic-head h2 { margin: 0; }
+  .epic-meta { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; color: var(--ink-soft); }
+  .story { border-top: 1px solid var(--line); padding: 18px 4px; display: grid; grid-template-columns: 64px 1fr; gap: 16px; scroll-margin-top: 16px; }
+  .story:target { background: var(--paper); }
+  .story h3 { margin: 0 0 4px; font-size: 18px; }
+  .ac-list { list-style: none; margin: 12px 0 0; padding: 0; counter-reset: ac; display: flex; flex-direction: column; gap: 9px; }
+  .ac-list li { counter-increment: ac; display: grid; grid-template-columns: 38px 1fr; gap: 8px; font-size: 15.5px; }
+  .ac-list li::before { content: "CA" counter(ac); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; color: var(--ink-soft); padding-top: 3px; }
+  @media (max-width: 520px) { .story { grid-template-columns: 1fr; gap: 4px; } }
+  @media print { .copy { display: none; } }
+
+  .page { max-width: 880px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+  .toc a { display: inline-block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; text-decoration: none; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 2px; padding: 5px 10px; }
+  .toc a:hover { border-color: var(--accent); }
+  .toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .part-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 4px; }
+  .part-head h2 { margin: 0; }
+  .chip { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px; letter-spacing: 0.04em; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+  .chip.bonus { color: var(--accent); border-color: var(--accent); }
+  h3 { margin-top: 22px; }
+  p { margin: 0 0 12px; }
+  .section-note { max-width: 72ch; }
+  ol.pasos, ul.lista { margin: 0 0 14px; padding-left: 22px; }
+  ol.pasos li, ul.lista li { margin-bottom: 8px; font-size: 16px; }
+  ol.pasos li::marker { font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--accent); font-size: 14px; }
+  ul.check { list-style: none; margin: 0 0 14px; padding: 0; }
+  ul.check li { display: grid; grid-template-columns: 24px 1fr; gap: 6px; margin-bottom: 7px; font-size: 16px; }
+  ul.check li::before { content: "☐"; color: var(--accent); font-size: 17px; line-height: 1.35; }
+  code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86em; background: var(--accent-soft); color: var(--ink); padding: 0.1em 0.4em; border-radius: 2px; }
+  pre.code { position: relative; background: var(--ink); color: var(--sheet); border-radius: 3px; padding: 14px 16px; overflow-x: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 1.55; margin: 8px 0 14px; }
+  pre.code code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  pre.code .c { opacity: 0.62; }
+  pre.code button.copy { position: absolute; top: 8px; right: 8px; font-size: 11px; padding: 4px 9px; background: var(--sheet); color: var(--ink); opacity: 0.0; transition: opacity 120ms ease; }
+  pre.code:hover button.copy, pre.code button.copy:focus-visible { opacity: 1; }
+  @media (hover: none) { pre.code button.copy { opacity: 1; } }
+  .callout { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 3px; background: var(--paper); padding: 12px 16px; margin: 14px 0; font-size: 15.5px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .label { display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .callout.warn { border-left-color: var(--cat-falla); }
+  .callout.warn .label { color: var(--cat-falla); }
+  .callout.ok { border-left-color: var(--ok); }
+  .callout.ok .label { color: var(--ok); }
+  figure { margin: 14px 0; }
+  figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 3px; }
+  figcaption { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+  table.plain td:first-child { white-space: nowrap; }
+  table.plain.wrap td:first-child { white-space: normal; }
+  dl.vocab { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0; font-size: 15.5px; }
+  dl.vocab dt { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px; color: var(--accent); font-weight: 600; padding-top: 2px; }
+  dl.vocab dd { margin: 0; }
+  @media (max-width: 560px) { dl.vocab { grid-template-columns: 1fr; gap: 2px; } dl.vocab dd { margin-bottom: 8px; } }
+  details { border: 1px solid var(--line); border-radius: 3px; padding: 10px 14px; margin: 10px 0; background: var(--paper); }
+  details summary { cursor: pointer; font-weight: 600; font-size: 15.5px; }
+  details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  details[open] summary { margin-bottom: 8px; }
+  @media print { pre.code button.copy { display: none; } details { display: block; } }
+
+  :root { --accent: #1f5f8b; --accent-soft: #dbe8f2; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --accent: #6fb1e0; --accent-soft: #1c2f3f; } }
+  :root[data-theme="dark"] { --accent: #6fb1e0; --accent-soft: #1c2f3f; }
+  a { color: var(--accent); }
+  .tag-link .k { color: var(--accent); font-weight: 600; letter-spacing: 0.06em; }
+  .solo-lectores { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  kbd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.84em; padding: 0.05em 0.4em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; background: var(--paper); white-space: nowrap; }
+  /* ---- Guía del hackatón ---- */
+  details.pistas { margin: 10px 0 14px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 3px; background: var(--paper); padding: 0 14px; }
+  details.pistas > summary { cursor: pointer; padding: 10px 0; font-weight: 600; font-size: 15.5px; }
+  details.pistas[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  details.pistas ul { margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="sheet">
+    <p class="eyebrow">Arquitectura de Software · Arquitectura hexagonal con APIs</p>
+    <h1>Hackatón hexagonal</h1>
+    <p class="lede">
+      En equipo y contra el reloj: convierten la API de notas en una <strong>arquitectura hexagonal</strong> —dominio, puertos y adaptadores— y
+      la empacan en un <strong>contenedor</strong>. Un verificador comprueba cada etapa, y un marcador en vivo suma los puntos.
+    </p>
+    <div class="links">
+      <a class="tag-link" href="presentacion.html"><span class="k">PRESENTACIÓN</span> la idea del hexágono</a>
+      <a class="tag-link" href="https://github.com/xaviercardona-ops/hackaton-hexagonal/generate" target="_blank" rel="noopener"><span class="k">PLANTILLA</span> crear el repo del equipo</a>
+      <a class="tag-link" href="marcador.html"><span class="k">MARCADOR</span> los puntos en vivo</a>
+      <a class="tag-link" href="https://github.com/xaviercardona-ops/hackaton-hexagonal" target="_blank" rel="noopener"><span class="k">CÓDIGO</span> hackaton-hexagonal</a>
+    </div>
+    <div class="stats"><span><b>6</b> etapas · <b>100</b> puntos</span><span><b>2</b> extras de <b>10</b></span><span>Docker o Podman</span><span>equipos de 3 · JavaScript · sin dependencias</span></div>
+    <ul class="toc">
+      <li><a href="#caso">El caso</a></li>
+      <li><a href="#reglas">Las reglas del juego</a></li>
+      <li><a href="#antes">Antes de empezar</a></li>
+      <li><a href="#empiecen">Empiecen así</a></li>
+      <li><a href="#mapa">El proyecto</a></li>
+      <li><a href="#e0">0 · Contenedor listo</a></li>
+      <li><a href="#e1">1 · Casos de uso</a></li>
+      <li><a href="#e2">2 · Adaptadores de salida</a></li>
+      <li><a href="#e3">3 · La API HTTP</a></li>
+      <li><a href="#e4">4 · Composición</a></li>
+      <li><a href="#e5">5 · Imagen</a></li>
+      <li><a href="#recorrido">Cómo viaja una petición</a></li>
+      <li><a href="#extras">Extras</a></li>
+      <li><a href="#trucos">Hoja de trucos</a></li>
+      <li><a href="#problemas">Problemas frecuentes</a></li>
+      <li><a href="#vocabulario">Vocabulario</a></li>
+    </ul>
+
+    <hr class="div">
+
+    <h2 id="caso">El caso: Notas del semestre</h2>
+    <p>Es el mismo caso del ejercicio de APIs. <strong>Cada estudiante</strong> registra las evaluaciones del semestre (nombre, peso y nota) y quiere saber cuánto lleva acumulado. Hoy lo hace en una hoja de cálculo donde los pesos suman 120 %, aparece una nota de 7 y se repiten nombres. Se pide <strong>una API que cuide las reglas</strong>: hoy la usa una web; mañana, una app y un bot; hoy guarda en memoria o en un archivo, mañana en una base de datos. <strong>Las reglas no pueden cambiar según quién pregunte ni según dónde se guarde.</strong> De eso trata el hackatón.</p>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Regla</th><th>El dominio avisa con</th><th>HTTP</th></tr></thead>
+        <tbody>
+          <tr><td>El nombre es obligatorio (hasta 40 caracteres)</td><td><code>NOMBRE_INVALIDO</code></td><td>422</td></tr>
+          <tr><td>El peso es un entero entre 1 y 100</td><td><code>PESO_INVALIDO</code></td><td>422</td></tr>
+          <tr><td>La nota va de 0 a 5</td><td><code>NOTA_INVALIDA</code></td><td>422</td></tr>
+          <tr><td>El nombre no se repite</td><td><code>NOMBRE_REPETIDO</code></td><td>409</td></tr>
+          <tr><td>Los pesos juntos no pasan de 100</td><td><code>PESO_EXCEDIDO</code></td><td>409</td></tr>
+          <tr><td>La evaluación tiene que existir</td><td><code>NO_EXISTE</code></td><td>404</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">El <strong>acumulado</strong> es la suma de <em>peso ÷ 100 × nota</em> de las evaluaciones ya calificadas. Ejemplo: Parcial 1 (30 %, nota 4.5) y Taller (20 %, nota 3.8) dan 1.35 + 0.76 = <strong>2.11</strong>, con el 50 % del semestre calificado.</p>
+    <div class="callout"><span class="label">Qué se juega aquí</span>
+      <p><strong>El dominio</strong> (ya escrito en <code>src/dominio/evaluacion.js</code>) decide qué regla se rompió y avisa con un código; no sabe nada de HTTP ni de archivos. <strong>El caso de uso</strong> (etapa 1) le da lo que necesita, como la lista de lo ya guardado, porque el dominio no puede ir a buscarla. <strong>El adaptador HTTP</strong> (etapa 3) decide cómo contarlo: 422, 409 o 404. <strong>El adaptador de salida</strong> (etapa 2) guarda donde toque. Ustedes construyen todo lo que rodea al dominio, y después lo <a href="#recorrido">ven funcionar capa por capa</a>.</p>
+    </div>
+
+    <hr class="div">
+
+    <h2 id="reglas">Las reglas del juego</h2>
+    <div class="callout warn"><span class="label">Cinco reglas</span>
+      <p><strong>1.</strong> Equipos de <strong>3</strong> (mínimo 2) y <strong>un repositorio público</strong> por equipo, creado desde la plantilla.
+      <strong>2.</strong> Cada etapa tiene un <strong>verificador</strong>: <code>npm run verificar</code>. Lo que pasa queda anotado en <code>progreso.json</code>, con la hora de la <em>primera</em> vez que pasó.
+      <strong>3.</strong> Con <code>git push</code> el <a href="marcador.html">marcador</a> lo lee de su repositorio. Suman los puntos de la etapa y <strong>3, 2 y 1 más</strong> para quienes la completen primero, segundo y tercero.
+      <strong>4.</strong> Gana quien tenga más puntos al terminar; si hay empate, quien llegó antes a su última etapa.
+      <strong>5.</strong> <strong>Juego limpio:</strong> el docente puede repetir el verificador en cualquier repositorio (un resultado que no se reproduce no cuenta); se vale ayudarse entre equipos, no copiar código; y cada integrante debe poder <em>explicar</em> el código de su equipo. El docente dirá si se pueden usar asistentes de IA.</p>
+    </div>
+    <p class="section-note" style="margin-top:12px"><strong>Premios simbólicos (los define el docente):</strong> primer, segundo y tercer lugar por puntos · <em>primera sangre</em>, para el primer equipo que complete cualquier etapa · <em>doble motor</em>, para quien complete la imagen con Docker <em>y</em> con Podman.</p>
+
+    <hr class="div">
+
+    <h2 id="antes">Antes de empezar</h2>
+    <ul class="check">
+      <li><span><strong>Node.js 22 o superior.</strong> Comprueben con <code>node -v</code>. No hay que instalar paquetes: el proyecto no tiene dependencias.</span></li>
+      <li><span><strong>Git y una cuenta de GitHub</strong> por integrante. Una persona crea el repositorio del equipo (<strong>público</strong>) y agrega a las demás.</span></li>
+      <li><span><strong>Un motor de contenedores: Docker o Podman</strong> (o los dos). Es la <strong>Etapa 0</strong> y la descarga es grande: <em>empiécenla ya</em>, mientras el docente explica. Sigan las instrucciones de instalación de la documentación oficial de su sistema (cambian con el tiempo): Docker Desktop o Docker Engine; Podman o Podman Desktop. En macOS y Windows, Podman necesita su máquina virtual: <code>podman machine init</code> y <code>podman machine start</code>.</span></li>
+      <li><span><strong>Un editor</strong> (VS Code recomendado) y una terminal.</span></li>
+    </ul>
+
+    <hr class="div">
+
+    <h2 id="empiecen">Empiecen así</h2>
+    <ol class="pasos">
+      <li>Una persona abre la <a href="https://github.com/xaviercardona-ops/hackaton-hexagonal/generate" target="_blank" rel="noopener">plantilla</a>, pulsa <em>Create repository from template</em>, lo crea <strong>público</strong> con el nombre <code>hackaton-su-equipo</code> y agrega a las demás. Todas clonan: <code>git clone https://github.com/USUARIO/hackaton-su-equipo.git</code>.</li>
+      <li>Abran <code>equipo.json</code> y escriban el <strong>nombre del equipo</strong> y los integrantes. Sin nombre, el marcador no sabrá quiénes son.</li>
+      <li>Corran el verificador y vean el punto de partida:
+<pre class="code"><code>cd hackaton-su-equipo
+npm run verificar -- 1 2 3 4</code></pre>
+        Todo falla con un mensaje «TODO etapa N»: ahí empieza el juego.</li>
+      <li><strong>Repártanse el trabajo.</strong> Las etapas 1, 2 y 3 son <em>independientes</em> (cada una se prueba con piezas falsas de las otras): una persona puede instalar el motor de contenedores y adelantar el Dockerfile mientras las otras dos hacen los casos de uso y los adaptadores. La composición (4) y la imagen (5) las arman juntas.</li>
+      <li>Cuando una etapa pase: <code>git add -A &amp;&amp; git commit -m "Etapa 1" &amp;&amp; git push</code>. Verán su fila en el marcador en unos minutos (GitHub guarda cada archivo hasta 5).</li>
+    </ol>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Comando</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td><code>npm run verificar</code></td><td>Comprueba las etapas 0 a 5 y las anota en <code>progreso.json</code></td></tr>
+          <tr><td><code>npm run verificar -- 1 3</code></td><td>Solo las etapas que digas (más rápido mientras trabajas)</td></tr>
+          <tr><td><code>npm run verificar -- extras</code></td><td>Los dos extras (volumen y dos motores)</td></tr>
+          <tr><td><code>node recorrido.mjs</code></td><td>Muestra, capa por capa, cómo viaja una petición por <em>su</em> hexágono (necesita las etapas 1, 2 y 3; ver <a href="#recorrido">más abajo</a>)</td></tr>
+          <tr><td><code>npm start</code></td><td>Arranca la API en tu máquina: <code>http://localhost:3000</code> (memoria). Con <code>ALMACEN=archivo npm start</code> guarda en <code>datos/evaluaciones.json</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="div">
+
+    <h2 id="mapa">El proyecto</h2>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Carpeta o archivo</th><th>Rol en el hexágono</th><th>¿Lo tocan?</th></tr></thead>
+        <tbody>
+          <tr><td><code>src/dominio/evaluacion.js</code></td><td><strong>Dominio:</strong> las reglas de las notas (peso, nota, nombre). No importa nada.</td><td>Solo leerlo</td></tr>
+          <tr><td><code>src/aplicacion/puerto-repositorio.js</code></td><td><strong>Puerto de salida:</strong> el acuerdo del repositorio (<code>listar</code>, <code>obtener</code>, <code>guardar</code>, <code>eliminar</code>)</td><td>Solo leerlo</td></tr>
+          <tr><td><code>src/aplicacion/casos-de-uso.js</code></td><td><strong>Casos de uso:</strong> orquestan el dominio y el puerto</td><td>Etapa 1</td></tr>
+          <tr><td><code>src/adaptadores/salida/repositorio-memoria.js</code> y <code>repositorio-archivo.js</code></td><td><strong>Adaptadores de salida:</strong> cumplen el puerto</td><td>Etapa 2</td></tr>
+          <tr><td><code>src/adaptadores/entrada/http.js</code></td><td><strong>Adaptador de entrada:</strong> la API HTTP. Usa <code>nucleo-http.mjs</code> (la plomería, ya escrita)</td><td>Etapa 3</td></tr>
+          <tr><td><code>src/configuracion.mjs</code></td><td><strong>Composición:</strong> elige y conecta las piezas</td><td>Etapa 4</td></tr>
+          <tr><td><code>Dockerfile</code> (o <code>Containerfile</code>)</td><td>La imagen que empaca todo</td><td>Etapa 5 (lo crean ustedes)</td></tr>
+          <tr><td><code>pruebas/</code> · <code>verificar.mjs</code></td><td>Lo que comprueba cada etapa: léanlo, es la especificación</td><td>Leer</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="div">
+
+    <div class="part-head" id="e0"><h2>Etapa 0 · Contenedor listo</h2><span class="chip">10 puntos</span></div>
+    <p class="section-note">Un motor de contenedores instalado, corriendo y capaz de ejecutar un contenedor.</p>
+    <ol class="pasos">
+      <li>Instalen Docker o Podman (ver «Antes de empezar») y <strong>arránquenlo</strong>: Docker Desktop abierto y diciendo que el motor está corriendo; Podman con su máquina virtual iniciada en macOS y Windows.</li>
+      <li>Comprueben: <code>docker --version</code> o <code>podman --version</code>, y después <code>npm run verificar -- 0</code>. El verificador ejecuta <code>hello-world</code>, que se descarga de internet la primera vez.</li>
+    </ol>
+    <details class="pistas"><summary>Si no pasa</summary>
+      <ul class="lista">
+        <li><strong>«está instalado pero no responde»:</strong> el programa existe, pero el motor no está arrancado. Ábranlo y esperen a que termine de iniciar; en Podman (macOS y Windows) corran <code>podman machine start</code>.</li>
+        <li><strong>Tarda o falla la descarga:</strong> <code>hello-world</code> se baja de internet; ¿hay conexión? Con una red lenta, pueden tardar unos minutos.</li>
+        <li><strong>Tienen los dos motores:</strong> perfecto, el verificador usa el primero que responda. Más adelante hay un extra por usar los dos.</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <div class="part-head" id="e1"><h2>Etapa 1 · Casos de uso</h2><span class="chip">15 puntos</span></div>
+    <p class="section-note">Archivo: <code>src/aplicacion/casos-de-uso.js</code>. Un caso de uso <strong>orquesta</strong>: pide datos al puerto de salida (el repositorio), le pide al dominio que decida y guarda. No sabe si el repositorio es memoria, archivo o base de datos.</p>
+    <ol class="pasos">
+      <li>Lean <code>src/dominio/evaluacion.js</code> y <code>src/aplicacion/puerto-repositorio.js</code>: las reglas y el acuerdo.</li>
+      <li>Implementen los seis métodos de <code>crearCasosDeUso({ repositorio })</code>: <code>listar</code>, <code>ver</code>, <code>crear</code>, <code>calificar</code>, <code>eliminar</code> y <code>resumen</code>. Las reglas las pone el dominio: <strong>no las copien</strong>.</li>
+      <li>Comprueben: <code>npm run verificar -- 1</code>. Las pruebas usan un repositorio <em>falso</em> de 10 líneas: no necesitan HTTP ni archivos.</li>
+    </ol>
+    <details class="pistas"><summary>Pistas (ábranla solo si llevan más de 10 minutos atascados)</summary>
+      <ul class="lista">
+        <li><code>crear</code>: <code>Evaluacion.crear(datos, repositorio.listar())</code> valida con lo que ya existe; después <code>repositorio.guardar(...)</code> y devuelven lo que <em>él</em> devuelva (trae el <code>id</code>).</li>
+        <li>Tres métodos necesitan «buscar o fallar»: escriban una función pequeña <code>buscar(id)</code> que use <code>repositorio.obtener(id)</code> y, si no hay nada, lance <code>new ErrorDeDominio(CODIGOS.NO_EXISTE, '…')</code>.</li>
+        <li><code>calificar</code>: buscar → <code>Evaluacion.calificar(encontrada, nota)</code> → guardar. <code>eliminar</code>: buscar (para que falle si no existe) → <code>repositorio.eliminar(id)</code>.</li>
+        <li>El archivo ya importa lo que necesita del dominio; <strong>no importen nada más</strong> (la etapa 4 y esta prueba lo vigilan).</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <div class="part-head" id="e2"><h2>Etapa 2 · Adaptadores de salida</h2><span class="chip">15 puntos</span></div>
+    <p class="section-note">Archivos: <code>src/adaptadores/salida/repositorio-memoria.js</code> y <code>repositorio-archivo.js</code>. Dos adaptadores que cumplen <strong>el mismo puerto</strong>: las mismas pruebas de contrato los comprueban a los dos.</p>
+    <ol class="pasos">
+      <li>Relean el contrato en <code>puerto-repositorio.js</code>: los cuatro métodos, el id «mayor + 1», las <em>copias</em> y que son síncronos.</li>
+      <li>Escriban el de <strong>memoria</strong> (un arreglo) y el de <strong>archivo</strong> (un arreglo JSON en disco, con <code>readFileSync</code> y <code>writeFileSync</code>).</li>
+      <li>Comprueben: <code>npm run verificar -- 2</code>. Si el de archivo pasa las mismas pruebas que el de memoria, son <em>intercambiables</em>: esa es la gracia.</li>
+    </ol>
+    <details class="pistas"><summary>Pistas (ábranla solo si llevan más de 10 minutos atascados)</summary>
+      <ul class="lista">
+        <li><strong>Copias:</strong> devuelvan <code>{ ...evaluacion }</code>, no el objeto que guardan. Si no, quien modifique lo recibido cambia el repositorio sin querer.</li>
+        <li><strong>Id nuevo:</strong> el mayor id que exista más 1 (el primero es 1): <code>lista.reduce((mayor, e) =&gt; Math.max(mayor, e.id), 0) + 1</code>.</li>
+        <li><strong>Archivo:</strong> una función <code>leer()</code> (devuelve <code>[]</code> si el archivo no existe: <code>existsSync</code>) y una <code>escribir(lista)</code>. Antes de escribir, creen la carpeta: <code>mkdirSync(dirname(ruta), { recursive: true })</code>.</li>
+        <li><strong>Reemplazar:</strong> si <code>guardar</code> recibe un <code>id</code> que ya existe, reemplaza esa evaluación (no la duplica).</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <div class="part-head" id="e3"><h2>Etapa 3 · La API HTTP</h2><span class="chip">20 puntos</span></div>
+    <p class="section-note">Archivo: <code>src/adaptadores/entrada/http.js</code>. La API es <strong>un adaptador más</strong>: traduce HTTP al idioma del negocio y viceversa. <em>Las rutas traducen, no deciden</em>: la prueba lo comprueba.</p>
+    <ol class="pasos">
+      <li>Lean <code>nucleo-http.mjs</code> (arriba del todo): qué recibe y qué devuelve un manejador. Las rutas llevan llaves: <code>/evaluaciones/{id}</code>.</li>
+      <li>Completen <code>crearRutas(casos)</code> con las seis rutas que lista el archivo (y sus estados: 200, 201 con <code>Location</code>, 204), y la tabla <code>ESTADO_POR_CODIGO</code> con <code>traducirError</code>.</li>
+      <li>Comprueben: <code>npm run verificar -- 3</code>. La prueba usa casos de uso <em>falsos</em>: no depende de las etapas 1 y 2.</li>
+    </ol>
+    <details class="pistas"><summary>Pistas (ábranla solo si llevan más de 10 minutos atascados)</summary>
+      <ul class="lista">
+        <li><strong>El id llega como texto</strong> (<code>"3"</code>): conviértanlo con <code>Number(params.id)</code> antes de llamar al caso de uso.</li>
+        <li><strong>Estados:</strong> lo que no existe, 404. Un valor inválido (nombre, peso o nota), 422. Un choque con el estado actual (nombre repetido, pesos que pasan de 100), 409. Es lo mismo que decidieron en la clase de APIs.</li>
+        <li><strong>Crear:</strong> <code>{ status: 201, cuerpo: creada, cabeceras: { Location: '/evaluaciones/' + creada.id } }</code>. <strong>Eliminar:</strong> <code>{ status: 204 }</code>, sin cuerpo.</li>
+        <li><strong>Calificar:</strong> el cuerpo es <code>{ "nota": 4.5 }</code>; pasen <code>cuerpo.nota</code> al caso de uso.</li>
+        <li><strong>No validen en la ruta.</strong> Si descubren un <code>if (peso &gt; 100)</code> en <code>http.js</code>, bórrenlo: ya lo hace el dominio.</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <div class="part-head" id="e4"><h2>Etapa 4 · Composición</h2><span class="chip">15 puntos</span></div>
+    <p class="section-note">Archivo: <code>src/configuracion.mjs</code>. El <strong>único lugar que conoce todas las piezas</strong>: elige el adaptador de salida según una variable de entorno, construye los casos de uso y la API.</p>
+    <ol class="pasos">
+      <li>Implementen <code>componer(entorno)</code>: <code>ALMACEN</code> (<code>memoria</code> por defecto, o <code>archivo</code>), <code>DATOS</code> (la ruta del archivo; por defecto <code>datos/evaluaciones.json</code>) y <code>PORT</code> (por defecto 3000, como número). Un <code>ALMACEN</code> desconocido es un error claro que menciona <code>ALMACEN</code>.</li>
+      <li>Prueben a mano: <code>npm start</code> y, en otra terminal, <code>curl http://localhost:3000/salud</code>. Después <code>ALMACEN=archivo npm start</code>, creen algo, reinicien y comprueben que sigue ahí.</li>
+      <li>Comprueben: <code>npm run verificar -- 4</code>. Además de que funcione, esta etapa vigila <strong>la regla de dependencias</strong>: nada de <code>src/dominio</code> ni de <code>src/aplicacion</code> puede importar módulos de Node (<code>node:fs</code>, <code>node:http</code>…), adaptadores ni la configuración.</li>
+    </ol>
+    <details class="pistas"><summary>Pistas</summary>
+      <ul class="lista">
+        <li>Es un <code>if / else if / else</code> que construye <code>repositorio</code>; después <code>crearCasosDeUso({ repositorio })</code> y <code>crearApi(casos)</code>. Devuelvan <code>{ servidor, puerto, almacen }</code>.</li>
+        <li>Para probar a mano en Windows PowerShell: <code>$env:ALMACEN = "archivo"; npm start</code>.</li>
+        <li>Si la regla de dependencias falla, el mensaje dice qué archivo importa qué. Casi siempre es un <code>import ... from 'node:...'</code> que se coló en el dominio o en un caso de uso.</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <div class="part-head" id="e5"><h2>Etapa 5 · Imagen</h2><span class="chip">25 puntos</span></div>
+    <p class="section-note">Creen un <code>Dockerfile</code> (o <code>Containerfile</code>) en la raíz: una <strong>imagen</strong> con su API. El verificador la construye, arranca un contenedor, espera a que <code>/salud</code> responda y usa la API de verdad (crear y listar).</p>
+    <ol class="pasos">
+      <li>Escriban el archivo. Una imagen se arma en capas: <em>de qué imagen parte</em> (<code>FROM</code>), <em>dónde trabaja</em> (<code>WORKDIR</code>), <em>qué copia</em> (<code>COPY</code>), <em>qué variables fija</em> (<code>ENV</code>) y <em>qué ejecuta</em> (<code>CMD</code>).</li>
+      <li>Pruébenla a mano antes de verificar:
+<pre class="code"><code>docker build -t notas-hex .
+docker run -d --name notas -p 3000:3000 notas-hex
+curl http://localhost:3000/salud
+docker rm -f notas</code></pre>
+        Con Podman es lo mismo cambiando <code>docker</code> por <code>podman</code>.</li>
+      <li>Comprueben: <code>npm run verificar -- 5</code>.</li>
+    </ol>
+    <details class="pistas"><summary>Pistas (ábranla solo si llevan más de 10 minutos atascados)</summary>
+      <ul class="lista">
+        <li><strong>Imagen de partida:</strong> Node 22. Escríbanla <em>completa</em>: <code>docker.io/library/node:22-alpine</code> (la versión «alpine» es pequeña). Con Podman conviene el nombre completo: así no tiene que elegir de qué registro bajarla.</li>
+        <li><strong>Qué copiar:</strong> <code>package.json</code> y la carpeta <code>src</code>. El proyecto no tiene dependencias, así que <strong>no hace falta <code>npm install</code></strong>. El archivo <code>.dockerignore</code> ya viene hecho.</li>
+        <li><strong>Cómo arranca:</strong> <code>CMD ["node", "src/main.mjs"]</code>. El servidor ya escucha en <code>0.0.0.0</code> y lee <code>PORT</code>: fijen <code>ENV PORT=3000</code> y <code>EXPOSE 3000</code>.</li>
+        <li><strong>«No responde en /salud»:</strong> ¿publicaron el puerto (<code>-p 3000:3000</code>)? ¿La aplicación escucha en 0.0.0.0? Miren el registro: <code>docker logs notas</code>.</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <h2 id="recorrido">Miren cómo viaja una petición</h2>
+    <p class="section-note">Cuando tengan hechas las etapas <strong>1, 2 y 3</strong> (la 4 y la 5 no hacen falta), corran:</p>
+<pre class="code"><code>node recorrido.mjs</code></pre>
+    <p>El archivo arma la API con <em>su</em> código, manda cinco peticiones de verdad y escribe, línea por línea, <strong>quién llamó a quién</strong>: la ruta HTTP, el caso de uso, el puerto con su adaptador de almacenamiento, y el dominio decidiendo. Al final repite todo con el otro almacén (memoria y archivo) y compara. <strong>No da puntos</strong>: sirve para <em>ver</em> la arquitectura que construyeron.</p>
+    <p>Si su repositorio se creó antes de que existiera este archivo, bájenlo a la raíz del proyecto:</p>
+<pre class="code"><code>curl -O https://raw.githubusercontent.com/xaviercardona-ops/hackaton-hexagonal/HEAD/recorrido.mjs</code></pre>
+    <p class="section-note" style="overflow-wrap:anywhere">En PowerShell: <code>Invoke-WebRequest https://raw.githubusercontent.com/xaviercardona-ops/hackaton-hexagonal/HEAD/recorrido.mjs -OutFile recorrido.mjs</code>. O cópienlo desde el repositorio de la plantilla.</p>
+    <details class="pistas"><summary>Para pensar (y para contárselo al equipo)</summary>
+      <ul class="lista">
+        <li>En la petición 2, ¿quién decidió que el peso 0 no vale: la ruta, el caso de uso o el dominio? ¿Quién lo convirtió en 422?</li>
+        <li>Si mañana el almacén fuera una base de datos, ¿qué archivos tocarían? ¿Cuáles <strong>no</strong>?</li>
+        <li>¿Qué pasaría si <code>src/dominio/evaluacion.js</code> importara <code>node:fs</code>? ¿Qué etapa lo detectaría?</li>
+        <li>El caso de uso llamó al almacén, pero en su código no importa ningún adaptador. ¿Cómo le llegó el repositorio? (Pista: etapa 4.)</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <h2 id="extras">Extras (+10 cada uno)</h2>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Extra</th><th>Qué hay que lograr</th><th>Comprueba con</th></tr></thead>
+        <tbody>
+          <tr><td><strong>E6 · Datos que sobreviven</strong></td><td>La imagen guarda en un <strong>volumen</strong> con el adaptador de archivo: se crea una evaluación, se destruye el contenedor y <em>otro contenedor nuevo</em> con el mismo volumen la sigue viendo. El verificador usa <code>ALMACEN=archivo</code>, <code>DATOS=/datos/evaluaciones.json</code> y el volumen montado en <code>/datos</code>.</td><td><code>npm run verificar -- 6</code></td></tr>
+          <tr><td><strong>E7 · Dos motores</strong></td><td>La misma imagen se construye y corre con <strong>Docker y con Podman</strong>. Necesita los dos motores respondiendo.</td><td><code>npm run verificar -- 7</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <details class="pistas"><summary>Pistas del volumen</summary>
+      <ul class="lista">
+        <li>A mano: <code>docker run -d -p 3000:3000 -v datos:/datos -e ALMACEN=archivo -e DATOS=/datos/evaluaciones.json notas-hex</code>. <code>datos</code> es un volumen con nombre: Docker lo crea solo.</li>
+        <li><strong>Permisos:</strong> si su imagen corre con <code>USER node</code> (buena práctica), la carpeta <code>/datos</code> debe pertenecer a ese usuario: créenla y entréguenla <em>antes</em> de cambiar de usuario (<code>RUN mkdir /datos &amp;&amp; chown node /datos</code>).</li>
+      </ul>
+    </details>
+
+    <hr class="div">
+
+    <h2 id="trucos">Hoja de trucos de contenedores</h2>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Para…</th><th>Docker</th><th>Podman</th></tr></thead>
+        <tbody>
+          <tr><td>Ver la versión</td><td><code>docker --version</code></td><td><code>podman --version</code></td></tr>
+          <tr><td>Construir una imagen</td><td><code>docker build -t notas-hex .</code></td><td><code>podman build -t notas-hex .</code></td></tr>
+          <tr><td>Correr un contenedor (en segundo plano, con puerto)</td><td><code>docker run -d --name notas -p 3000:3000 notas-hex</code></td><td><code>podman run -d --name notas -p 3000:3000 notas-hex</code></td></tr>
+          <tr><td>Con variables y volumen</td><td><code>docker run -d -p 3000:3000 -e ALMACEN=archivo -v datos:/datos notas-hex</code></td><td><code>podman run -d -p 3000:3000 -e ALMACEN=archivo -v datos:/datos notas-hex</code></td></tr>
+          <tr><td>Ver contenedores</td><td><code>docker ps -a</code></td><td><code>podman ps -a</code></td></tr>
+          <tr><td>Ver el registro</td><td><code>docker logs notas</code></td><td><code>podman logs notas</code></td></tr>
+          <tr><td>Detener y borrar</td><td><code>docker rm -f notas</code></td><td><code>podman rm -f notas</code></td></tr>
+          <tr><td>Borrar una imagen / un volumen</td><td><code>docker rmi notas-hex</code> · <code>docker volume rm datos</code></td><td><code>podman rmi notas-hex</code> · <code>podman volume rm datos</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note" style="margin-top:10px">Los comandos de Podman imitan a los de Docker; las diferencias de fondo las explica el docente. Para lo de esta guía, funcionan igual.</p>
+
+    <hr class="div">
+
+    <h2 id="problemas">Problemas frecuentes</h2>
+    <div class="table-wrap">
+      <table class="plain wrap">
+        <thead><tr><th>Síntoma</th><th>Causa probable</th><th>Qué hacer</th></tr></thead>
+        <tbody>
+          <tr><td><code>npm run verificar</code> dice «Falta el nombre del equipo»</td><td><code>equipo.json</code> está vacío.</td><td>Escriban el nombre del equipo y los integrantes.</td></tr>
+          <tr><td>El marcador no muestra a mi equipo</td><td>Repositorio privado, falta el <code>git push</code> de <code>progreso.json</code>, o GitHub aún guarda la copia vieja (hasta 5 min).</td><td>Abran <code>https://raw.githubusercontent.com/USUARIO/REPO/HEAD/progreso.json</code>: si da 404, es el repositorio o el push.</td></tr>
+          <tr><td>La Etapa 1 falla con «debía lanzar un ErrorDeDominio»</td><td>El caso de uso no busca antes de usar, o valida por su cuenta.</td><td>Revisen las pistas: <code>buscar(id)</code> lanza <code>NO_EXISTE</code>; las demás reglas las lanza el dominio.</td></tr>
+          <tr><td>La Etapa 3 devuelve 404 donde esperaba 200</td><td>El id llega como texto y el caso de uso lo compara con un número.</td><td><code>Number(params.id)</code>.</td></tr>
+          <tr><td>La regla de dependencias falla</td><td>Un <code>import</code> de afuera en <code>src/dominio</code> o <code>src/aplicacion</code>.</td><td>El mensaje dice archivo e importación; muévanla a un adaptador o a la composición.</td></tr>
+          <tr><td>«docker: command not found» / «Cannot connect to the Docker daemon»</td><td>No está instalado, o el motor no está arrancado.</td><td>Instálenlo / ábranlo y esperen a que inicie (Etapa 0).</td></tr>
+          <tr><td>La imagen se construye pero el contenedor no responde</td><td>No publicaron el puerto, o la aplicación escucha solo en <code>127.0.0.1</code>.</td><td><code>-p 3000:3000</code> y usen <code>src/main.mjs</code> tal como viene (escucha en <code>0.0.0.0</code>).</td></tr>
+          <tr><td>Podman pregunta de qué registro bajar la imagen</td><td>Nombre corto en el <code>FROM</code>.</td><td>Escriban el nombre completo: <code>docker.io/library/node:22-alpine</code>.</td></tr>
+          <tr><td>«port is already allocated»</td><td>Otro contenedor (o programa) usa el puerto 3000.</td><td><code>docker ps</code> y <code>docker rm -f</code> del anterior, o usen otro puerto de su máquina: <code>-p 3100:3000</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="div">
+
+    <h2 id="vocabulario">Vocabulario</h2>
+    <div class="table-wrap">
+      <table class="plain wrap vocab">
+        <thead><tr><th>Término</th><th>Qué quiere decir aquí</th></tr></thead>
+        <tbody>
+          <tr><td>Dominio</td><td>Las reglas del negocio, sin saber nada de HTTP, archivos ni bases de datos.</td></tr>
+          <tr><td>Caso de uso</td><td>Una cosa que el negocio ofrece (crear una evaluación). Orquesta el dominio y los puertos.</td></tr>
+          <tr><td>Puerto</td><td>Un acuerdo entre el centro y lo de afuera. De entrada (qué ofrece el negocio) o de salida (qué necesita).</td></tr>
+          <tr><td>Adaptador</td><td>El código que cumple un puerto con una tecnología concreta: la API HTTP, el repositorio de archivo.</td></tr>
+          <tr><td>Composición</td><td>El único lugar que conoce todas las piezas y las conecta (aquí, <code>configuracion.mjs</code>).</td></tr>
+          <tr><td>Prueba de contrato</td><td>Las mismas pruebas ejecutadas contra todos los adaptadores de un puerto.</td></tr>
+          <tr><td>Imagen / contenedor</td><td>La imagen es la receta empacada (la aplicación y lo que necesita); el contenedor es esa imagen en ejecución.</td></tr>
+          <tr><td>Volumen</td><td>Un lugar de almacenamiento que vive fuera del contenedor, para que los datos sobrevivan cuando se destruye.</td></tr>
+          <tr><td>Motor de contenedores</td><td>El programa que construye imágenes y corre contenedores: Docker o Podman.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// Agrega un botón "Copiar" a cada bloque de código.
+document.querySelectorAll("pre.code").forEach(function (pre) {
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "copy";
+  btn.textContent = "Copiar";
+  btn.setAttribute("aria-label", "Copiar el código");
+  btn.addEventListener("click", async function () {
+    var texto = pre.querySelector("code").innerText;
+    try {
+      await navigator.clipboard.writeText(texto);
+      btn.textContent = "Copiado";
+    } catch (e) {
+      var r = document.createRange(); r.selectNodeContents(pre.querySelector("code"));
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "Seleccionado: Ctrl/Cmd + C";
+    }
+    setTimeout(function () { btn.textContent = "Copiar"; }, 2200);
+  });
+  pre.appendChild(btn);
+});
+</script>
+</body>
+</html>

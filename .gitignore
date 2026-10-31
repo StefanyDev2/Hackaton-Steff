@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.log
+.env
+.vscode/
+# Datos que genera el adaptador de archivo al correr en local
+datos/
+# Material del docente: no se publica
+GUIA_DOCENTE.md
+solucion/
+.vercel
+.env*
