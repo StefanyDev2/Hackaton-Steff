@@ -35,20 +35,59 @@ import { ErrorHttp, crearManejador } from './nucleo-http.mjs';
 
 // De código del dominio a estado HTTP.
 const ESTADO_POR_CODIGO = {
-  // TODO etapa 3: un estado para cada código. Ejemplo de la forma:  [CODIGOS.NO_EXISTE]: ...,
+  [CODIGOS.NO_EXISTE]: 404,
+  [CODIGOS.NOMBRE_INVALIDO]: 422,
+  [CODIGOS.PESO_INVALIDO]: 422,
+  [CODIGOS.NOTA_INVALIDA]: 422,
+  [CODIGOS.NOMBRE_REPETIDO]: 409,
+  [CODIGOS.PESO_EXCEDIDO]: 409,
 };
 
 /** El núcleo la llama con cada error que no es un ErrorHttp. */
 export function traducirError(error) {
-  // TODO etapa 3: si NO es un ErrorDeDominio, devuélvelo tal cual (el núcleo lo volverá un 500 sin filtrar detalles).
-  //               Si lo es: new ErrorHttp(estado, error.message), con el estado de tu tabla (422 si el código no está).
-  return error;
+  if (!(error instanceof ErrorDeDominio)) return error;
+  return new ErrorHttp(ESTADO_POR_CODIGO[error.codigo] ?? 422, error.message);
 }
 
 /** Las rutas de la API: cada una es { metodo, ruta, manejador }. */
 export function crearRutas(casos) {
   return [
-    // TODO etapa 3: las seis rutas de la lista de arriba. Un manejador recibe { params, cuerpo, … } y devuelve { status, cuerpo?, cabeceras? }.
+    {
+      metodo: 'GET',
+      ruta: '/evaluaciones',
+      manejador: () => ({ status: 200, cuerpo: casos.listar() }),
+    },
+    {
+      metodo: 'GET',
+      ruta: '/evaluaciones/{id}',
+      manejador: ({ params }) => ({ status: 200, cuerpo: casos.ver(Number(params.id)) }),
+    },
+    {
+      metodo: 'POST',
+      ruta: '/evaluaciones',
+      manejador: ({ cuerpo }) => {
+        const creada = casos.crear(cuerpo);
+        return { status: 201, cuerpo: creada, cabeceras: { Location: `/evaluaciones/${creada.id}` } };
+      },
+    },
+    {
+      metodo: 'PATCH',
+      ruta: '/evaluaciones/{id}',
+      manejador: ({ params, cuerpo }) => ({ status: 200, cuerpo: casos.calificar(Number(params.id), cuerpo.nota) }),
+    },
+    {
+      metodo: 'DELETE',
+      ruta: '/evaluaciones/{id}',
+      manejador: ({ params }) => {
+        casos.eliminar(Number(params.id));
+        return { status: 204 };
+      },
+    },
+    {
+      metodo: 'GET',
+      ruta: '/resumen',
+      manejador: () => ({ status: 200, cuerpo: casos.resumen() }),
+    },
   ];
 }
 

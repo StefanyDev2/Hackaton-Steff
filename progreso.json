@@ -4,7 +4,7 @@
   "integrantes": [
     "StefanyUseche"
   ],
-  "actualizado": "2026-10-31T16:43:27.786Z",
+  "actualizado": "2026-10-31T16:47:24.568Z",
   "entorno": {
     "node": "v22.23.4",
     "sistema": "win32 x64"
@@ -38,6 +38,16 @@
       "primeraVez": "2026-10-31T16:43:27.849Z",
       "ultima": "2026-10-31T16:43:27.849Z",
       "comprobaciones": "15/15",
+      "evidencia": ""
+    },
+    "3": {
+      "titulo": "Adaptador de entrada: la API HTTP",
+      "puntos": 20,
+      "extra": false,
+      "ok": true,
+      "primeraVez": "2026-10-31T16:47:24.768Z",
+      "ultima": "2026-10-31T16:47:24.768Z",
+      "comprobaciones": "12/12",
       "evidencia": ""
     }
   }
