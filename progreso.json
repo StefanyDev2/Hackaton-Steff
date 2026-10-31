@@ -4,7 +4,7 @@
   "integrantes": [
     "StefanyUseche"
   ],
-  "actualizado": "2026-10-31T16:52:55.909Z",
+  "actualizado": "2026-10-31T17:02:22.931Z",
   "entorno": {
     "node": "v22.23.4",
     "sistema": "win32 x64"
@@ -69,6 +69,26 @@
       "ultima": "2026-10-31T16:53:02.013Z",
       "comprobaciones": "4/4",
       "evidencia": "docker 29.5.3; imagen sha256:f61e62db58be"
+    },
+    "6": {
+      "titulo": "Extra: datos que sobreviven en un volumen",
+      "puntos": 10,
+      "extra": true,
+      "ok": true,
+      "primeraVez": "2026-10-31T17:01:18.917Z",
+      "ultima": "2026-10-31T17:01:18.917Z",
+      "comprobaciones": "3/3",
+      "evidencia": "docker 29.5.3; volumen"
+    },
+    "7": {
+      "titulo": "Extra: el mismo resultado con los dos motores",
+      "puntos": 10,
+      "extra": true,
+      "ok": true,
+      "primeraVez": "2026-10-31T17:03:00.697Z",
+      "ultima": "2026-10-31T17:03:00.697Z",
+      "comprobaciones": "7/7",
+      "evidencia": "docker 29.5.3 + podman 5.8.3"
     }
   }
 }
