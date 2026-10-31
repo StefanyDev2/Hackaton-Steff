@@ -4,9 +4,9 @@
   "integrantes": [
     "StefanyUseche"
   ],
-  "actualizado": "2026-10-31T16:32:30.979Z",
+  "actualizado": "2026-10-31T16:39:00.503Z",
   "entorno": {
-    "node": "v20.19.0",
+    "node": "v22.23.4",
     "sistema": "win32 x64"
   },
   "etapas": {
@@ -19,6 +19,16 @@
       "ultima": "2026-10-31T16:32:33.235Z",
       "comprobaciones": "2/2",
       "evidencia": "docker 29.5.3"
+    },
+    "1": {
+      "titulo": "Casos de uso",
+      "puntos": 15,
+      "extra": false,
+      "ok": true,
+      "primeraVez": "2026-10-31T16:39:00.521Z",
+      "ultima": "2026-10-31T16:39:00.521Z",
+      "comprobaciones": "9/9",
+      "evidencia": ""
     }
   }
 }
