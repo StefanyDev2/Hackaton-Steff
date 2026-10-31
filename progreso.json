@@ -4,7 +4,7 @@
   "integrantes": [
     "StefanyUseche"
   ],
-  "actualizado": "2026-10-31T16:49:33.505Z",
+  "actualizado": "2026-10-31T16:52:55.909Z",
   "entorno": {
     "node": "v22.23.4",
     "sistema": "win32 x64"
@@ -59,6 +59,16 @@
       "ultima": "2026-10-31T16:49:33.634Z",
       "comprobaciones": "6/6",
       "evidencia": ""
+    },
+    "5": {
+      "titulo": "Imagen: la API en un contenedor",
+      "puntos": 25,
+      "extra": false,
+      "ok": true,
+      "primeraVez": "2026-10-31T16:53:02.013Z",
+      "ultima": "2026-10-31T16:53:02.013Z",
+      "comprobaciones": "4/4",
+      "evidencia": "docker 29.5.3; imagen sha256:f61e62db58be"
     }
   }
 }
